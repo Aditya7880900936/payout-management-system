@@ -27,6 +27,9 @@ Transaction.belongsTo(User);
 Sale.hasMany(Payout);
 Payout.belongsTo(Sale);
 
+Payout.hasMany(Transaction);
+Transaction.belongsTo(Payout);
+
 module.exports = {
     User,
     Sale,

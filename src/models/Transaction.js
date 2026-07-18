@@ -10,13 +10,18 @@ const Transaction = sequelize.define(
       primaryKey: true,
     },
 
+    payoutId: {
+      type: DataTypes.UUID,
+      allowNull: true,
+    },
+
     type: {
       type: DataTypes.ENUM(
         "advance_credit",
         "final_credit",
         "withdrawal_debit",
         "recovery_credit",
-        "adjustment_debit"
+        "adjustment_debit",
       ),
       allowNull: false,
     },
@@ -39,7 +44,7 @@ const Transaction = sequelize.define(
   {
     tableName: "transactions",
     timestamps: true,
-  }
+  },
 );
 
 module.exports = Transaction;
