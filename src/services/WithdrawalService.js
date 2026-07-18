@@ -1,5 +1,6 @@
 const sequelize = require("../config/database");
 const { User, Withdrawal, Transaction } = require("../models");
+const BalanceService = require("./BalanceService");
 
 class WithdrawalService {
   async withdraw(userId, amount) {
@@ -19,14 +20,10 @@ class WithdrawalService {
       if (user.lastWithdrawalAt) {
         const last = new Date(user.lastWithdrawalAt);
 
-        const hours =
-          (now.getTime() - last.getTime()) /
-          (1000 * 60 * 60);
+        const hours = (now.getTime() - last.getTime()) / (1000 * 60 * 60);
 
         if (hours < 24) {
-          throw new Error(
-            "Only one withdrawal allowed every 24 hours"
-          );
+          throw new Error("Only one withdrawal allowed every 24 hours");
         }
       }
 
@@ -42,26 +39,17 @@ class WithdrawalService {
         },
         {
           transaction: dbTransaction,
-        }
-      );
-
-      await Transaction.create(
-        {
-          userId,
-          payoutId: null,
-          type: "withdrawal_debit",
-          amount,
-          referenceId: withdrawal.id,
-          description: "Withdrawal initiated",
         },
-        {
-          transaction: dbTransaction,
-        }
       );
 
-      user.withdrawableBalance =
-        Number(user.withdrawableBalance) -
-        Number(amount);
+      await BalanceService.debit({
+        userId,
+        amount,
+        type: "withdrawal_debit",
+        referenceId: withdrawal.id,
+        description: "Withdrawal initiated",
+        transaction: dbTransaction,
+      });
 
       user.lastWithdrawalAt = now;
 

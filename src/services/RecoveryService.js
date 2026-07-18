@@ -1,40 +1,24 @@
 const sequelize = require("../config/database");
 
-const {
-  Withdrawal,
-  User,
-  Transaction,
-} = require("../models");
+const { Withdrawal, User, Transaction } = require("../models");
 
 class RecoveryService {
   async recover(withdrawalId, status) {
-    const dbTransaction =
-      await sequelize.transaction();
+    const dbTransaction = await sequelize.transaction();
 
     try {
-      const withdrawal =
-        await Withdrawal.findByPk(
-          withdrawalId,
-          {
-            transaction: dbTransaction,
-          }
-        );
+      const withdrawal = await Withdrawal.findByPk(withdrawalId, {
+        transaction: dbTransaction,
+      });
 
-      if (!withdrawal)
-        throw new Error("Withdrawal not found");
+      if (!withdrawal) throw new Error("Withdrawal not found");
 
-      if (
-        !["failed", "cancelled", "rejected"].includes(
-          status
-        )
-      ) {
+      if (!["failed", "cancelled", "rejected"].includes(status)) {
         throw new Error("Invalid status");
       }
 
       if (withdrawal.status !== "processing") {
-        throw new Error(
-          "Recovery already handled"
-        );
+        throw new Error("Recovery already handled");
       }
 
       withdrawal.status = status;
@@ -43,36 +27,18 @@ class RecoveryService {
         transaction: dbTransaction,
       });
 
-      const user =
-        await User.findByPk(
-          withdrawal.userId,
-          {
-            transaction: dbTransaction,
-          }
-        );
-
-      user.withdrawableBalance =
-        Number(user.withdrawableBalance) +
-        Number(withdrawal.amount);
-
-      await user.save({
+      const user = await User.findByPk(withdrawal.userId, {
         transaction: dbTransaction,
       });
 
-      await Transaction.create(
-        {
-          userId: user.id,
-          payoutId: null,
-          type: "recovery_credit",
-          amount: withdrawal.amount,
-          referenceId: withdrawal.id,
-          description:
-            "Recovered failed withdrawal",
-        },
-        {
-          transaction: dbTransaction,
-        }
-      );
+      await BalanceService.credit({
+        userId: user.id,
+        amount: withdrawal.amount,
+        type: "recovery_credit",
+        referenceId: withdrawal.id,
+        description: "Recovered failed withdrawal",
+        transaction: dbTransaction,
+      });
 
       await dbTransaction.commit();
 

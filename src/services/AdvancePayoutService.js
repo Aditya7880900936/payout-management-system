@@ -1,6 +1,6 @@
 const sequelize = require("../config/database");
 const { User, Sale, Payout, Transaction } = require("../models");
-
+const BalanceService = require("./BalanceService");
 const { calculateAdvance } = require("../helpers/payoutCalculator");
 
 class AdvancePayoutService {
@@ -34,24 +34,15 @@ class AdvancePayoutService {
             status: "completed",
             remarks: "10% advance payout",
           },
-          { transaction: dbTransaction }
+          { transaction: dbTransaction },
         );
 
-        await Transaction.create(
-          {
-            userId: user.id,
-            type: "advance_credit",
-            amount: advanceAmount,
-            referenceId: sale.id,
-            description: "Advance payout credited",
-          },
-          { transaction: dbTransaction }
-        );
-
-        user.withdrawableBalance =
-          Number(user.withdrawableBalance) + advanceAmount;
-
-        await user.save({
+        await BalanceService.credit({
+          userId: user.id,
+          amount: advanceAmount,
+          type: "advance_credit",
+          referenceId: sale.id,
+          description: "Advance payout credited",
           transaction: dbTransaction,
         });
 
