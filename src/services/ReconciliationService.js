@@ -19,9 +19,13 @@ class ReconciliationService {
 
       if (sale.reconciled) throw new Error("Already reconciled");
 
-      const user = await User.findByPk(sale.UserId, {
+      const user = await User.findByPk(sale.userId, {
         transaction: dbTransaction,
       });
+
+      if (!user) {
+        throw new Error("User not found");
+      }
 
       const advance = Number(sale.advanceAmount);
 
@@ -35,7 +39,7 @@ class ReconciliationService {
             type: "final",
             amount: remaining,
             status: "completed",
-            remarks: "Final done payout",
+            remarks: "Final payout",
           },
           {
             transaction: dbTransaction,
@@ -47,20 +51,20 @@ class ReconciliationService {
           amount: remaining,
           type: "final_credit",
           referenceId: sale.id,
-          description: "Final done payout",
+          description: "Final payout",
           transaction: dbTransaction,
         });
       }
 
       if (newStatus === "rejected") {
-await BalanceService.debit({
-  userId: user.id,
-  amount: advance,
-  type: "adjustment_debit",
-  referenceId: sale.id,
-  description: "Advance adjustment",
-  transaction: dbTransaction,
-});
+        await BalanceService.debit({
+          userId: user.id,
+          amount: advance,
+          type: "adjustment_debit",
+          referenceId: sale.id,
+          description: "Advance adjustment",
+          transaction: dbTransaction,
+        });
       }
 
       sale.status = newStatus;

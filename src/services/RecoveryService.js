@@ -1,6 +1,7 @@
 const sequelize = require("../config/database");
 
 const { Withdrawal, User, Transaction } = require("../models");
+const BalanceService = require("./BalanceService");
 
 class RecoveryService {
   async recover(withdrawalId, status) {

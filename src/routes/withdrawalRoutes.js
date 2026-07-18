@@ -14,7 +14,7 @@ router.post(
 );
 
 router.post(
-    "/recovery",
+    "/recover",
     validate(recoveryValidator),
     controller.recover
 );

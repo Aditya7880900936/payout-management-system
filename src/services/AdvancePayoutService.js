@@ -19,7 +19,7 @@ class AdvancePayoutService {
       for (const sale of pendingSales) {
         const advanceAmount = calculateAdvance(Number(sale.earning));
 
-        const user = await User.findByPk(sale.UserId, {
+        const user = await User.findByPk(sale.userId, {
           transaction: dbTransaction,
         });
 

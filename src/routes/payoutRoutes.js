@@ -13,4 +13,8 @@ router.post(
     controller.reconcile
 );
 
+router.get("/sales", controller.getSales);
+
+router.get("/users", controller.getUsers);
+
 module.exports = router;
