@@ -4,6 +4,14 @@ A robust backend system that simulates an affiliate payout workflow. The applica
 
 ---
 
+![Node.js](https://img.shields.io/badge/Node.js-22.x-green)
+![Express](https://img.shields.io/badge/Express-5.x-black)
+![SQLite](https://img.shields.io/badge/SQLite-3-blue)
+![Jest](https://img.shields.io/badge/Tests-30_Passing-brightgreen)
+![License](https://img.shields.io/badge/License-MIT-blue)
+
+---
+
 ## Table of Contents
 
 - [Features](#features)
@@ -42,6 +50,7 @@ A robust backend system that simulates an affiliate payout workflow. The applica
 - Centralized error handling
 - Database transactions with Sequelize
 - SQLite database support
+- Comprehensive automated testing using Jest & Supertest
 
 ---
 
@@ -421,7 +430,7 @@ POST /api/withdrawals
 #### Recovery
 
 ```
-POST /api/withdrawals/recovery
+POST /api/withdrawals/recover
 ```
 
 **Request Body**
@@ -543,7 +552,7 @@ If any operation fails, the transaction is rolled back to maintain consistency.
 Clone the repository:
 
 ```bash
-git clone https://github.com/<your-username>/payout-management-system.git
+git clone https://github.com/Aditya7880900936/payout-management-system.git
 ```
 
 Move into the project directory:
@@ -611,6 +620,29 @@ npm run dev
 
 ---
 
+## Testing
+
+This project includes automated tests using **Jest** and **Supertest**.
+
+### Coverage
+
+- 5 Service Test Suites
+- 2 API Integration Test Suites
+- 30 Passing Tests
+
+Run all tests:
+
+```bash
+npm test
+```
+
+Run tests in watch mode:
+
+```bash
+npm run test:watch
+```
+
+
 ## Future Improvements
 
 - JWT Authentication
@@ -620,8 +652,6 @@ npm run dev
 - Scheduled Background Jobs
 - Swagger / OpenAPI Documentation
 - PostgreSQL Support
-- Unit Tests
-- Integration Tests
 - CI/CD Pipeline
 - Logging & Monitoring
 
@@ -637,4 +667,4 @@ This project is licensed under the MIT License.
 
 **Aditya Sanskar Srivastav**
 
-Backend Developer | Node.js | Express | Sequelize | Open Source
+Backend Developer | Golang | Node.js | Express | Sequelize | Open Source
