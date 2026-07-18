@@ -1,77 +1,79 @@
 const sequelize = require("../config/database");
+const { User, Sale, Payout, Transaction } = require("../models");
 
-const SaleRepository = require("../repositories/SaleRepository");
-const UserRepository = require("../repositories/UserRepository");
-const PayoutRepository = require("../repositories/PayoutRepository");
+const { calculateAdvance } = require("../helpers/payoutCalculator");
 
 class AdvancePayoutService {
-    async run() {
+  async processAdvancePayouts() {
+    const dbTransaction = await sequelize.transaction();
 
-        const transaction = await sequelize.transaction();
+    try {
+      const pendingSales = await Sale.findAll({
+        where: {
+          status: "pending",
+          advancePaid: false,
+        },
+        transaction: dbTransaction,
+      });
 
-        try {
+      for (const sale of pendingSales) {
+        const advanceAmount = calculateAdvance(Number(sale.earning));
 
-            const sales =
-                await SaleRepository.getEligiblePendingSales(transaction);
+        const user = await User.findByPk(sale.UserId, {
+          transaction: dbTransaction,
+        });
 
-            for (const sale of sales) {
+        if (!user) continue;
 
-                const advance =
-                    Number(sale.earning) * 0.10;
+        await Payout.create(
+          {
+            userId: user.id,
+            saleId: sale.id,
+            type: "advance",
+            amount: advanceAmount,
+            status: "completed",
+            remarks: "10% advance payout",
+          },
+          { transaction: dbTransaction }
+        );
 
-                await PayoutRepository.create(
-                    {
-                        userId: sale.UserId,
-                        saleId: sale.id,
+        await Transaction.create(
+          {
+            userId: user.id,
+            type: "advance_credit",
+            amount: advanceAmount,
+            referenceId: sale.id,
+            description: "Advance payout credited",
+          },
+          { transaction: dbTransaction }
+        );
 
-                        type: "advance",
+        user.withdrawableBalance =
+          Number(user.withdrawableBalance) + advanceAmount;
 
-                        amount: advance,
+        await user.save({
+          transaction: dbTransaction,
+        });
 
-                        status: "completed",
+        sale.advancePaid = true;
+        sale.advanceAmount = advanceAmount;
 
-                        remarks: "Advance payout",
-                    },
-                    transaction
-                );
+        await sale.save({
+          transaction: dbTransaction,
+        });
+      }
 
-                const user =
-                    await UserRepository.findById(
-                        sale.UserId,
-                        transaction
-                    );
+      await dbTransaction.commit();
 
-                await UserRepository.update(
-                    sale.UserId,
-                    {
-                        withdrawableBalance:
-                            Number(user.withdrawableBalance) +
-                            advance,
-                    },
-                    transaction
-                );
-
-                await SaleRepository.updateSale(
-                    sale.id,
-                    {
-                        advancePaid: true,
-                        advanceAmount: advance,
-                    },
-                    transaction
-                );
-            }
-
-            await transaction.commit();
-
-            return sales.length;
-
-        } catch (err) {
-
-            await transaction.rollback();
-
-            throw err;
-        }
+      return {
+        success: true,
+        processed: pendingSales.length,
+      };
+    } catch (err) {
+      await dbTransaction.rollback();
+      throw err;
     }
+  }
 }
 
 module.exports = new AdvancePayoutService();
