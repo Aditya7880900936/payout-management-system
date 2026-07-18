@@ -58,7 +58,7 @@ class ReconciliationService {
                         amount: remaining,
                         status: "completed",
                         remarks:
-                            "Final payout",
+                            "Finaldone  payout",
                     },
                     {
                         transaction: dbTransaction,
